@@ -4,7 +4,7 @@ import { getMerchants, createMerchant, updateMerchantStatus, resetMerchantDevice
 export async function GET() {
   try {
     const list = await getMerchants();
-    return NextResponse.json({ success: true, data: list });
+    return NextResponse.json({ success: true, data: list, merchants: list });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
@@ -13,7 +13,11 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { businessName, email, password, daysDuration, priceSoles, planName } = body;
+    const { businessName, email } = body;
+    const password = body.password || body.passwordHash;
+    const priceSoles = body.priceSoles !== undefined ? Number(body.priceSoles) : 10.0;
+    const planName = body.planName || "Pago Único Vitalicio (De por vida)";
+    const daysDuration = body.daysDuration !== undefined ? Number(body.daysDuration) : 36500;
 
     if (!businessName || !email || !password) {
       return NextResponse.json(
@@ -26,12 +30,12 @@ export async function POST(req: NextRequest) {
       businessName,
       email,
       passwordHash: password,
-      planName: planName || `Plan ${daysDuration || 30} Días`,
-      daysDuration: Number(daysDuration) || 30,
-      priceSoles: Number(priceSoles) || 35.0,
+      planName,
+      daysDuration,
+      priceSoles,
     });
 
-    return NextResponse.json({ success: true, data: created });
+    return NextResponse.json({ success: true, data: created, merchant: created });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
@@ -46,7 +50,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Parámetros incompletos." }, { status: 400 });
     }
 
-    if (action === "CHANGE_STATUS") {
+    if (action === "CHANGE_STATUS" || action === "TOGGLE_STATUS") {
       await updateMerchantStatus(id, status);
       return NextResponse.json({ success: true });
     }

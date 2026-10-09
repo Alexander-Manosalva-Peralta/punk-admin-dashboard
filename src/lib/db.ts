@@ -15,20 +15,20 @@ export interface Merchant {
   createdAt: string;
 }
 
-// Store en memoria con datos iniciales para funcionamiento instantáneo
+// Store en memoria con datos iniciales: PAGO ÚNICO VITALICIO S/. 10.00
 let localMerchants: Merchant[] = [
   {
     id: "m-001",
     businessName: "Bodega Don Pepe",
     email: "donpepe@gmail.com",
     passwordHash: "pepe2026",
-    planName: "Pago Único - Licencia 30 Días",
-    daysDuration: 30,
-    priceSoles: 35.0,
+    planName: "Pago Único Vitalicio (De por vida)",
+    daysDuration: 36500,
+    priceSoles: 10.0,
     status: "ACTIVE",
     boundDeviceId: "android_98af21d0a",
     firstLoginAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    expiresAt: new Date(Date.now() + 28 * 86400000).toISOString(),
+    expiresAt: new Date(Date.now() + 36500 * 86400000).toISOString(),
     createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
   },
   {
@@ -36,13 +36,13 @@ let localMerchants: Merchant[] = [
     businessName: "Farmacia Santa Rosa",
     email: "santarosa@gmail.com",
     passwordHash: "rosa2026",
-    planName: "Pago Único - Licencia 90 Días",
-    daysDuration: 90,
-    priceSoles: 95.0,
+    planName: "Pago Único Vitalicio (De por vida)",
+    daysDuration: 36500,
+    priceSoles: 10.0,
     status: "ACTIVE",
     boundDeviceId: "android_c4b12aa09",
     firstLoginAt: new Date(Date.now() - 6 * 86400000).toISOString(),
-    expiresAt: new Date(Date.now() + 84 * 86400000).toISOString(),
+    expiresAt: new Date(Date.now() + 36500 * 86400000).toISOString(),
     createdAt: new Date(Date.now() - 6 * 86400000).toISOString(),
   },
   {
@@ -50,28 +50,14 @@ let localMerchants: Merchant[] = [
     businessName: "Minimarket Los Olivos",
     email: "losolivos@gmail.com",
     passwordHash: "olivos2026",
-    planName: "Pago Único - Licencia 365 Días",
-    daysDuration: 365,
-    priceSoles: 320.0,
+    planName: "Pago Único Vitalicio (De por vida)",
+    daysDuration: 36500,
+    priceSoles: 10.0,
     status: "ACTIVE",
     boundDeviceId: null,
     firstLoginAt: null,
-    expiresAt: new Date(Date.now() + 365 * 86400000).toISOString(),
+    expiresAt: new Date(Date.now() + 36500 * 86400000).toISOString(),
     createdAt: new Date().toISOString(),
-  },
-  {
-    id: "m-004",
-    businessName: "Librería San Martín",
-    email: "sanmartin@gmail.com",
-    passwordHash: "martin2026",
-    planName: "Pago Único - Licencia 30 Días",
-    daysDuration: 30,
-    priceSoles: 35.0,
-    status: "EXPIRED",
-    boundDeviceId: "android_5788fbc01",
-    firstLoginAt: new Date(Date.now() - 32 * 86400000).toISOString(),
-    expiresAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 32 * 86400000).toISOString(),
   },
 ];
 
@@ -113,21 +99,24 @@ export async function createMerchant(data: {
   businessName: string;
   email: string;
   passwordHash: string;
-  planName: string;
-  daysDuration: number;
-  priceSoles: number;
+  planName?: string;
+  daysDuration?: number;
+  priceSoles?: number;
 }): Promise<Merchant> {
   const cleanEmail = data.email.trim().toLowerCase();
-  const expiresAt = new Date(Date.now() + data.daysDuration * 86400000).toISOString();
+  const planName = data.planName || "Pago Único Vitalicio (De por vida)";
+  const daysDuration = data.daysDuration || 36500;
+  const priceSoles = data.priceSoles !== undefined ? data.priceSoles : 10.0;
+  const expiresAt = new Date(Date.now() + daysDuration * 86400000).toISOString();
 
   const newMerchant: Merchant = {
     id: `m-${Date.now()}`,
     businessName: data.businessName,
     email: cleanEmail,
     passwordHash: data.passwordHash,
-    planName: data.planName,
-    daysDuration: data.daysDuration,
-    priceSoles: data.priceSoles,
+    planName,
+    daysDuration,
+    priceSoles,
     status: "ACTIVE",
     boundDeviceId: null,
     firstLoginAt: null,
@@ -239,15 +228,6 @@ export async function validateDeviceLogin(
     return { success: false, message: "Tu cuenta ha sido suspendida. Contacta a Punk Soporte." };
   }
 
-  const expiresTime = new Date(merchant.expiresAt).getTime();
-  const now = Date.now();
-  if (now > expiresTime || merchant.status === "EXPIRED") {
-    return {
-      success: false,
-      message: "Tu suscripción ha vencido. Renueva tu plan con el administrador.",
-    };
-  }
-
   // PROTECCIÓN ANTI-PIRATERÍA (Device Locking):
   // Si no tenía dispositivo vinculado, se vincula en el primer inicio de sesión:
   if (!merchant.boundDeviceId) {
@@ -273,13 +253,11 @@ export async function validateDeviceLogin(
     };
   }
 
-  const daysRemaining = Math.max(0, Math.ceil((expiresTime - now) / 86400000));
-
   return {
     success: true,
     merchantName: merchant.businessName,
-    planName: merchant.planName,
-    daysRemaining,
+    planName: "Pago Único Vitalicio (De por vida)",
+    daysRemaining: 9999,
     token: `PUNK_JWT_${merchant.id}_${Date.now()}`,
   };
 }
@@ -288,28 +266,26 @@ export async function getBiMetrics() {
   const merchants = await getMerchants();
   const total = merchants.length;
   const active = merchants.filter((m) => m.status === "ACTIVE").length;
-  const expired = merchants.filter((m) => m.status === "EXPIRED").length;
   const suspended = merchants.filter((m) => m.status === "SUSPENDED").length;
+  const boundDevices = merchants.filter((m) => m.boundDeviceId).length;
 
-  const totalRevenue = merchants.reduce((sum, m) => sum + (m.priceSoles || 0), 0);
-  const activeRevenue = merchants
-    .filter((m) => m.status === "ACTIVE")
-    .reduce((sum, m) => sum + (m.priceSoles || 0), 0);
-
-  const planBreakdown = {
-    monthly: merchants.filter((m) => m.daysDuration === 30).length,
-    quarterly: merchants.filter((m) => m.daysDuration === 90).length,
-    annual: merchants.filter((m) => m.daysDuration === 365).length,
-  };
+  // Cada cliente = S/. 10.00 pago único de por vida
+  const totalRevenue = merchants.reduce((sum, m) => sum + (m.priceSoles || 10.0), 0);
 
   return {
     totalMerchants: total,
     activeMerchants: active,
-    expiredMerchants: expired,
+    expiredMerchants: 0,
     suspendedMerchants: suspended,
     totalRevenue,
-    activeRevenue,
-    planBreakdown,
+    activeRevenue: totalRevenue,
+    boundDevices,
+    planBreakdown: {
+      lifetime: total,
+      monthly: 0,
+      quarterly: 0,
+      annual: 0,
+    },
   };
 }
 
@@ -319,13 +295,13 @@ function mapDbMerchant(db: any): Merchant {
     businessName: db.business_name,
     email: db.email,
     passwordHash: db.password_hash,
-    planName: db.plan_name,
-    daysDuration: db.days_duration,
-    priceSoles: Number(db.price_soles),
-    status: db.status,
+    planName: db.plan_name || "Pago Único Vitalicio (De por vida)",
+    daysDuration: db.days_duration || 36500,
+    priceSoles: db.price_soles !== undefined ? Number(db.price_soles) : 10.0,
+    status: db.status || "ACTIVE",
     boundDeviceId: db.bound_device_id,
     firstLoginAt: db.first_login_at,
-    expiresAt: db.expires_at,
-    createdAt: db.created_at,
+    expiresAt: db.expires_at || new Date(Date.now() + 36500 * 86400000).toISOString(),
+    createdAt: db.created_at || new Date().toISOString(),
   };
 }
