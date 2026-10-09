@@ -143,7 +143,12 @@ export async function createMerchant(data: {
       if (!error && inserted) {
         return mapDbMerchant(inserted);
       }
-    } catch (_) {}
+      if (error) {
+        console.error("Error al insertar en Supabase:", error);
+      }
+    } catch (e) {
+      console.error("Excepción al conectar con Supabase:", e);
+    }
   }
 
   localMerchants.unshift(newMerchant);
