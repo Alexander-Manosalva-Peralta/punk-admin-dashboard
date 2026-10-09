@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Punk Admin | Centro de Control & BI de Licencias",
+  title: "Punk Control — Gestión de Licencias & BI",
   description:
-    "Panel de administración centralizada para el ecosistema de cobros Punk. Gestión de licencias, bloqueo de dispositivos, y análisis de Business Intelligence.",
+    "Panel de administración central para Punk Cobros. Gestión de licencias de pago único, bloqueo de dispositivos y métricas comerciales.",
   icons: {
     icon: "/logo_p_solo.png",
   },
@@ -16,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className="dark">
-      <body className="min-h-screen bg-[#0A0D12] text-gray-100 antialiased selection:bg-emerald-500 selection:text-white">
+    <html lang="es" className="h-full bg-[#F5F5F7]">
+      <body className="h-full bg-[#F5F5F7] text-[#1D1D1F] antialiased">
         {children}
       </body>
     </html>

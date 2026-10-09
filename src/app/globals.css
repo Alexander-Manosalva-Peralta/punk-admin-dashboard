@@ -3,53 +3,53 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0A0D12;
-  --bg-surface: #11151C;
-  --bg-surface-elevated: #181E27;
-  --border-subtle: #1F2633;
-  --border-accent: #2A3446;
-  --accent-emerald: #10B981;
-  --accent-cyan: #06B6D4;
+  --bg-primary: #F5F5F7;
+  --bg-card: #FFFFFF;
+  --text-primary: #1D1D1F;
+  --text-secondary: #6E6E73;
+  --text-muted: #86868B;
+  --apple-blue: #0071E3;
 }
 
 body {
-  background-color: var(--bg-primary);
-  color: #F3F4F6;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  overflow-x: hidden;
+  background-color: #F5F5F7;
+  color: #1D1D1F;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar */
+/* Apple style clean scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0A0D12;
+  background: #F5F5F7;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1F2633;
-  border-radius: 4px;
+  background: #D1D1D6;
+  border-radius: 9999px;
+  border: 2px solid #F5F5F7;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: #AEAEB2;
 }
 
-/* Glassmorphism helpers */
-.glass-panel {
-  background: rgba(17, 21, 28, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+/* Apple Segmented Control / Tabs Animation */
+.apple-tab-active {
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+  color: #1D1D1F;
 }
 
-.glow-emerald {
-  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
-}
-
-.glow-cyan {
-  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.25);
+/* Apple Card subtle border */
+.apple-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }

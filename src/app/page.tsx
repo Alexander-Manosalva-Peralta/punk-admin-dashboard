@@ -28,7 +28,11 @@ import {
   BarChart3,
   PieChart,
   HelpCircle,
-  Check
+  Check,
+  SlidersHorizontal,
+  Layers,
+  Database,
+  ArrowRight
 } from "lucide-react";
 
 interface MerchantItem {
@@ -60,25 +64,26 @@ interface BiData {
   };
 }
 
-export default function AdminDashboard() {
+type TabType = "bi" | "merchants" | "create" | "database";
+
+export default function AppleAdminDashboard() {
+  const [activeTab, setActiveTab] = useState<TabType>("bi");
   const [merchants, setMerchants] = useState<MerchantItem[]>([]);
   const [biStats, setBiStats] = useState<BiData | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [showModal, setShowModal] = useState(false);
-  const [showWhatsappModal, setShowWhatsappModal] = useState(false);
-  const [newMerchantData, setNewMerchantData] = useState<MerchantItem | null>(null);
   const [visiblePasswords, setVisiblePasswords] = useState<{ [id: string]: boolean }>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Form State para Nuevo Comercio
+  // Form State para Nuevo Comercio (Pestaña Dedicada)
   const [formBusinessName, setFormBusinessName] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [formPassword, setFormPassword] = useState("");
   const [formPlan, setFormPlan] = useState("30");
   const [formPhone, setFormPhone] = useState("");
   const [creating, setCreating] = useState(false);
+  const [createdSuccess, setCreatedSuccess] = useState<MerchantItem | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -117,20 +122,20 @@ export default function AdminDashboard() {
 
     setCreating(true);
     try {
-      let planName = "Plan Pro 30 Días";
+      let planName = "Pago Único - Licencia 30 Días";
       let days = 30;
       let price = 35.0;
 
       if (formPlan === "90") {
-        planName = "Plan Trimestral 90 Días";
+        planName = "Pago Único - Licencia 90 Días";
         days = 90;
         price = 95.0;
       } else if (formPlan === "180") {
-        planName = "Plan Semestral 180 Días";
+        planName = "Pago Único - Licencia 180 Días";
         days = 180;
         price = 175.0;
       } else if (formPlan === "365") {
-        planName = "Plan Anual 365 Días";
+        planName = "Pago Único - Licencia 365 Días";
         days = 365;
         price = 320.0;
       }
@@ -150,13 +155,7 @@ export default function AdminDashboard() {
 
       const data = await res.json();
       if (data.merchant) {
-        setNewMerchantData(data.merchant);
-        setShowModal(false);
-        setShowWhatsappModal(true);
-        // Reset form
-        setFormBusinessName("");
-        setFormEmail("");
-        setFormPassword("");
+        setCreatedSuccess(data.merchant);
         fetchData();
       }
     } catch (err) {
@@ -166,8 +165,16 @@ export default function AdminDashboard() {
     }
   }
 
+  function handleResetForm() {
+    setFormBusinessName("");
+    setFormEmail("");
+    setFormPassword("");
+    setFormPhone("");
+    setCreatedSuccess(null);
+  }
+
   async function handleResetDevice(id: string) {
-    if (!confirm("¿Seguro que deseas desvincular el dispositivo celular de este comercio? Podrá iniciar sesión en un nuevo equipo.")) return;
+    if (!confirm("¿Deseas desvincular el celular actual? El comercio podrá iniciar sesión en un nuevo dispositivo.")) return;
     try {
       const res = await fetch("/api/merchants", {
         method: "PATCH",
@@ -195,7 +202,7 @@ export default function AdminDashboard() {
   }
 
   async function handleDeleteMerchant(id: string) {
-    if (!confirm("¿Seguro que deseas eliminar definitivamente este comercio del sistema?")) return;
+    if (!confirm("¿Seguro que deseas eliminar definitivamente este registro de comercio?")) return;
     try {
       const res = await fetch(`/api/merchants?id=${id}`, { method: "DELETE" });
       if (res.ok) fetchData();
@@ -225,641 +232,868 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#07090D] text-gray-200">
-      {/* HEADER SUPERIOR */}
-      <header className="sticky top-0 z-30 border-b border-[#1E2533] bg-[#0C1017]/95 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F]">
+      {/* CABECERA ESTILO APPLE: LIMPIA, CON ESPACIO NEGATIVO Y JERARQUÍA CLARA */}
+      <header className="sticky top-0 z-30 bg-[#F5F5F7]/85 backdrop-blur-md border-b border-black/[0.06]">
+        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-[#2D3748] shadow-lg shadow-emerald-500/10">
+            <div className="relative w-11 h-11 rounded-2xl overflow-hidden bg-white shadow-sm border border-black/[0.08] flex items-center justify-center">
               <Image
                 src="/logo_p_solo.png"
                 alt="Punk Logo"
-                fill
+                width={44}
+                height={44}
                 className="object-cover"
                 priority
               />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xl font-bold tracking-tight text-white">Punk</span>
-                <span className="px-2 py-0.5 text-xs font-semibold rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                  Control & BI
+              <div className="flex items-center space-x-2.5">
+                <h1 className="text-xl font-bold tracking-tight text-[#1D1D1F]">Punk</h1>
+                <span className="text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-black/[0.05] text-[#6E6E73]">
+                  Admin Suite
                 </span>
               </div>
-              <p className="text-xs text-gray-400">
-                Sistema Centralizado de Licencias & Protección Anti-Piratería
+              <p className="text-xs text-[#86868B]">
+                Gestión Centralizada de Licencias & Inteligencia de Negocios
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2 bg-[#121824] px-3 py-1.5 rounded-lg border border-[#20293A]">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-xs text-gray-300 font-medium">Supabase / PostgreSQL Conectado</span>
+          {/* INDICADORES Y ACCIÓN DIRECTA */}
+          <div className="flex items-center space-x-3">
+            <div className="hidden sm:flex items-center space-x-2 bg-white px-3.5 py-1.5 rounded-full border border-black/[0.06] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-[#34C759]"></span>
+              <span className="text-xs font-medium text-[#6E6E73]">Vercel & Supabase</span>
             </div>
 
             <button
-              onClick={() => {
-                generateRandomPassword();
-                setShowModal(true);
-              }}
-              className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-semibold px-4 py-2.5 rounded-xl transition duration-150 shadow-lg shadow-emerald-500/20 active:scale-95"
+              onClick={fetchData}
+              className="p-2 rounded-full bg-white border border-black/[0.08] hover:bg-gray-50 text-[#6E6E73] hover:text-[#1D1D1F] transition shadow-sm"
+              title="Actualizar datos"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>Nuevo Comercio</span>
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* NAVEGACIÓN POR PESTAÑAS (APPLE SEGMENTED CONTROLS) */}
+        <div className="max-w-6xl mx-auto px-6 pb-4">
+          <div className="inline-flex p-1 bg-[#E5E5EA]/70 rounded-xl space-x-1 border border-black/[0.04]">
+            <button
+              onClick={() => setActiveTab("bi")}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                activeTab === "bi"
+                  ? "bg-white text-[#1D1D1F] shadow-sm"
+                  : "text-[#6E6E73] hover:text-[#1D1D1F]"
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Métricas & BI</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("merchants")}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                activeTab === "merchants"
+                  ? "bg-white text-[#1D1D1F] shadow-sm"
+                  : "text-[#6E6E73] hover:text-[#1D1D1F]"
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Comercios & Licencias</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-black/[0.06] text-[10px] text-[#6E6E73]">
+                {merchants.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => {
+                if (!formPassword) generateRandomPassword();
+                setActiveTab("create");
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                activeTab === "create"
+                  ? "bg-[#0071E3] text-white shadow-sm"
+                  : "text-[#0071E3] hover:bg-black/[0.03]"
+              }`}
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Registrar Comercio</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("database")}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                activeTab === "database"
+                  ? "bg-white text-[#1D1D1F] shadow-sm"
+                  : "text-[#6E6E73] hover:text-[#1D1D1F]"
+              }`}
+            >
+              <Database className="w-3.5 h-3.5" />
+              <span>Base de Datos</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* CONTENIDO PRINCIPAL */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* SECCIÓN 1: BUSINESS INTELLIGENCE (BI) KPIS */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <BarChart3 className="w-5 h-5 text-emerald-400" />
-              <h2 className="text-lg font-bold text-white tracking-tight">Business Intelligence & Métricas</h2>
-            </div>
-            <span className="text-xs text-gray-400">Actualización en tiempo real</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* KPI 1: Ingresos Recaudados */}
-            <div className="bg-[#0F141F] border border-[#1E2638] rounded-2xl p-5 hover:border-emerald-500/40 transition">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Recaudación Bruta</span>
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                  <CreditCard className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <span className="text-2xl font-extrabold text-white">
-                  S/. {biStats ? biStats.totalRevenue.toFixed(2) : "0.00"}
-                </span>
-                <div className="flex items-center space-x-1.5 mt-1 text-xs text-emerald-400">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span>S/. {biStats ? biStats.activeRevenue.toFixed(2) : "0.00"} en planes activos</span>
-                </div>
-              </div>
+      {/* CONTENIDO PRINCIPAL SEGÚN PESTAÑA */}
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        {/* ========================================================= */}
+        {/* PESTAÑA 1: BUSINESS INTELLIGENCE & MÉTRICAS (ESTILO APPLE) */}
+        {/* ========================================================= */}
+        {activeTab === "bi" && (
+          <div className="space-y-8">
+            {/* Título de Sección */}
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-[#1D1D1F]">
+                Resumen Ejecutivo & Rendimiento
+              </h2>
+              <p className="text-sm text-[#86868B] mt-1">
+                Análisis de cobros por pagos únicos de licencias y actividad de comercios autorizados.
+              </p>
             </div>
 
-            {/* KPI 2: Comercios Activos */}
-            <div className="bg-[#0F141F] border border-[#1E2638] rounded-2xl p-5 hover:border-emerald-500/40 transition">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Comercios Activos</span>
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400">
-                  <Users className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <span className="text-2xl font-extrabold text-white">
-                  {biStats ? biStats.activeMerchants : 0}
-                </span>
-                <div className="flex items-center space-x-1 mt-1 text-xs text-gray-400">
-                  <span>de {biStats ? biStats.totalMerchants : 0} registrados en total</span>
-                </div>
-              </div>
-            </div>
-
-            {/* KPI 3: Dispositivos Vinculados (Hardware Lock) */}
-            <div className="bg-[#0F141F] border border-[#1E2638] rounded-2xl p-5 hover:border-emerald-500/40 transition">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Dispositivos Bloqueados</span>
-                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                  <Smartphone className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <span className="text-2xl font-extrabold text-white">
-                  {merchants.filter((m) => m.boundDeviceId).length}
-                </span>
-                <div className="flex items-center space-x-1 mt-1 text-xs text-indigo-400">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Protección anti-piratería activa</span>
-                </div>
-              </div>
-            </div>
-
-            {/* KPI 4: Licencias Vencidas / Por Renovar */}
-            <div className="bg-[#0F141F] border border-[#1E2638] rounded-2xl p-5 hover:border-amber-500/40 transition">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Por Renovar / Vencidos</span>
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
-                  <AlertCircle className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <span className="text-2xl font-extrabold text-white">
-                  {biStats ? biStats.expiredMerchants : 0}
-                </span>
-                <div className="flex items-center space-x-1 mt-1 text-xs text-amber-400">
-                  <span>Oportunidades de re-cobro</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* GRÁFICOS VISUALES DE DISTRIBUCIÓN BI */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-            {/* Gráfico 1: Desglose por Planes */}
-            <div className="lg:col-span-2 bg-[#0F141F] border border-[#1E2638] rounded-2xl p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-[#1E2638] pb-3">
-                <div className="flex items-center space-x-2">
-                  <PieChart className="w-4 h-4 text-emerald-400" />
-                  <h3 className="text-sm font-bold text-white">Distribución de Planes & Retención</h3>
-                </div>
-                <span className="text-xs text-gray-400">Métricas de adopción</span>
-              </div>
-
-              <div className="space-y-4">
-                {/* Barra Mensual */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-300 font-medium">Plan Pro 30 Días (S/. 35.00)</span>
-                    <span className="text-emerald-400 font-bold">
-                      {biStats?.planBreakdown.monthly || 0} comercios
-                    </span>
-                  </div>
-                  <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${((biStats?.planBreakdown.monthly || 0) / Math.max(1, biStats?.totalMerchants || 1)) * 100}%`,
-                      }}
-                    />
+            {/* TARJETAS DE KPIS PRINCIPALES (APPLE WHITE CARDS) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {/* KPI 1: Recaudación Total por Pagos Únicos */}
+              <div className="bg-white rounded-2xl p-6 border border-black/[0.06] shadow-sm hover:shadow-md transition">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#86868B] uppercase tracking-wider">
+                    Recaudación Total
+                  </span>
+                  <div className="w-8 h-8 rounded-full bg-[#0071E3]/10 flex items-center justify-center text-[#0071E3]">
+                    <CreditCard className="w-4 h-4" />
                   </div>
                 </div>
-
-                {/* Barra Trimestral */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-300 font-medium">Plan Trimestral 90 Días (S/. 95.00)</span>
-                    <span className="text-cyan-400 font-bold">
-                      {biStats?.planBreakdown.quarterly || 0} comercios
-                    </span>
-                  </div>
-                  <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-cyan-400 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${((biStats?.planBreakdown.quarterly || 0) / Math.max(1, biStats?.totalMerchants || 1)) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Barra Anual */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-300 font-medium">Plan Anual 365 Días (S/. 320.00)</span>
-                    <span className="text-indigo-400 font-bold">
-                      {biStats?.planBreakdown.annual || 0} comercios
-                    </span>
-                  </div>
-                  <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-indigo-500 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${((biStats?.planBreakdown.annual || 0) / Math.max(1, biStats?.totalMerchants || 1)) * 100}%`,
-                      }}
-                    />
-                  </div>
+                <div className="mt-4">
+                  <span className="text-3xl font-bold text-[#1D1D1F] tracking-tight">
+                    S/. {biStats ? biStats.totalRevenue.toFixed(2) : "0.00"}
+                  </span>
+                  <p className="text-xs text-[#6E6E73] mt-1.5 flex items-center space-x-1">
+                    <TrendingUp className="w-3.5 h-3.5 text-[#34C759]" />
+                    <span>Pagos únicos acumulados</span>
+                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* Gráfico 2: Salud del Ecosistema */}
-            <div className="bg-[#0F141F] border border-[#1E2638] rounded-2xl p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-[#1E2638] pb-3">
-                <h3 className="text-sm font-bold text-white">Salud del Ecosistema</h3>
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              </div>
-
-              <div className="flex flex-col justify-center items-center py-4 space-y-3">
-                <div className="relative w-28 h-28 flex items-center justify-center">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-[#182030]"
-                      strokeWidth="3.5"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className="text-emerald-500"
-                      strokeDasharray={`${((biStats?.activeMerchants || 1) / Math.max(1, biStats?.totalMerchants || 1)) * 100}, 100`}
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <div className="absolute flex flex-col items-center">
-                    <span className="text-xl font-bold text-white">
-                      {Math.round(((biStats?.activeMerchants || 0) / Math.max(1, biStats?.totalMerchants || 1)) * 100)}%
-                    </span>
-                    <span className="text-[10px] text-gray-400">Actividad</span>
+              {/* KPI 2: Licencias Activas */}
+              <div className="bg-white rounded-2xl p-6 border border-black/[0.06] shadow-sm hover:shadow-md transition">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#86868B] uppercase tracking-wider">
+                    Comercios Activos
+                  </span>
+                  <div className="w-8 h-8 rounded-full bg-[#34C759]/10 flex items-center justify-center text-[#34C759]">
+                    <Users className="w-4 h-4" />
                   </div>
                 </div>
+                <div className="mt-4">
+                  <span className="text-3xl font-bold text-[#1D1D1F] tracking-tight">
+                    {biStats ? biStats.activeMerchants : 0}
+                  </span>
+                  <p className="text-xs text-[#6E6E73] mt-1.5">
+                    de {biStats ? biStats.totalMerchants : 0} comercios registrados
+                  </p>
+                </div>
+              </div>
 
-                <div className="text-center">
-                  <p className="text-xs text-gray-300 font-medium">Tasa de Efectividad</p>
-                  <p className="text-[11px] text-gray-500 mt-0.5">
-                    Comercios usando el parlante de voz sin incidencias
+              {/* KPI 3: Dispositivos Asegurados */}
+              <div className="bg-white rounded-2xl p-6 border border-black/[0.06] shadow-sm hover:shadow-md transition">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#86868B] uppercase tracking-wider">
+                    Equipos Vinculados
+                  </span>
+                  <div className="w-8 h-8 rounded-full bg-[#AF52DE]/10 flex items-center justify-center text-[#AF52DE]">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <span className="text-3xl font-bold text-[#1D1D1F] tracking-tight">
+                    {merchants.filter((m) => m.boundDeviceId).length}
+                  </span>
+                  <p className="text-xs text-[#6E6E73] mt-1.5 flex items-center space-x-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#AF52DE]" />
+                    <span>Protección anti-piratería activa</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* KPI 4: Licencias Vencidas / Por Renovar */}
+              <div className="bg-white rounded-2xl p-6 border border-black/[0.06] shadow-sm hover:shadow-md transition">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#86868B] uppercase tracking-wider">
+                    Por Renovar
+                  </span>
+                  <div className="w-8 h-8 rounded-full bg-[#FF9500]/10 flex items-center justify-center text-[#FF9500]">
+                    <AlertCircle className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <span className="text-3xl font-bold text-[#1D1D1F] tracking-tight">
+                    {biStats ? biStats.expiredMerchants : 0}
+                  </span>
+                  <p className="text-xs text-[#6E6E73] mt-1.5">
+                    Oportunidad de cobro de nueva licencia
                   </p>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* SECCIÓN 2: TABLA DE CONTROL DE LICENCIAS & COMERCIOS */}
-        <section className="bg-[#0F141F] border border-[#1E2638] rounded-2xl overflow-hidden shadow-2xl">
-          {/* Barra de Filtros y Búsqueda */}
-          <div className="p-5 border-b border-[#1E2638] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Buscar por negocio, correo o ID de celular..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-[#141A26] border border-[#232C3D] rounded-xl pl-10 pr-4 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition"
-              />
+            {/* GRÁFICOS VISUALES APPLE: LIMPIOS, CLAROS, SIN SOBRECARGA */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Gráfico 1: Desglose por Planes de Pago Único */}
+              <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-black/[0.06] shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-base font-semibold text-[#1D1D1F]">
+                    Distribución por Tipo de Licencia
+                  </h3>
+                  <p className="text-xs text-[#86868B] mt-0.5">
+                    Volumen de ventas según la modalidad de pago único contratada
+                  </p>
+                </div>
+
+                <div className="space-y-5">
+                  {/* Barra 1: 30 Días */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-semibold text-[#1D1D1F]">
+                        Pago Único — Licencia 30 Días (S/. 35.00)
+                      </span>
+                      <span className="font-bold text-[#0071E3]">
+                        {biStats?.planBreakdown.monthly || 0} comercios
+                      </span>
+                    </div>
+                    <div className="h-2.5 w-full bg-[#F5F5F7] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#0071E3] rounded-full transition-all duration-500"
+                        style={{
+                          width: `${((biStats?.planBreakdown.monthly || 0) / Math.max(1, biStats?.totalMerchants || 1)) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Barra 2: 90 Días */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-semibold text-[#1D1D1F]">
+                        Pago Único — Licencia 90 Días (S/. 95.00)
+                      </span>
+                      <span className="font-bold text-[#34C759]">
+                        {biStats?.planBreakdown.quarterly || 0} comercios
+                      </span>
+                    </div>
+                    <div className="h-2.5 w-full bg-[#F5F5F7] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#34C759] rounded-full transition-all duration-500"
+                        style={{
+                          width: `${((biStats?.planBreakdown.quarterly || 0) / Math.max(1, biStats?.totalMerchants || 1)) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Barra 3: 365 Días */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-semibold text-[#1D1D1F]">
+                        Pago Único — Licencia 365 Días (S/. 320.00)
+                      </span>
+                      <span className="font-bold text-[#AF52DE]">
+                        {biStats?.planBreakdown.annual || 0} comercios
+                      </span>
+                    </div>
+                    <div className="h-2.5 w-full bg-[#F5F5F7] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#AF52DE] rounded-full transition-all duration-500"
+                        style={{
+                          width: `${((biStats?.planBreakdown.annual || 0) / Math.max(1, biStats?.totalMerchants || 1)) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-black/[0.04] flex items-center justify-between text-xs text-[#86868B]">
+                  <span>Precios oficiales en Soles peruanos</span>
+                  <span>Sin cobros recurrentes sorpresa</span>
+                </div>
+              </div>
+
+              {/* Gráfico 2: Tasa de Comercios Activos */}
+              <div className="bg-white rounded-2xl p-6 border border-black/[0.06] shadow-sm flex flex-col justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-[#1D1D1F]">Salud de la Red</h3>
+                  <p className="text-xs text-[#86868B] mt-0.5">Proporción de comercios operando</p>
+                </div>
+
+                <div className="flex flex-col items-center justify-center my-6">
+                  <div className="relative w-32 h-32 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                      <path
+                        className="text-[#E5E5EA]"
+                        strokeWidth="3.2"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                      <path
+                        className="text-[#34C759]"
+                        strokeDasharray={`${((biStats?.activeMerchants || 1) / Math.max(1, biStats?.totalMerchants || 1)) * 100}, 100`}
+                        strokeWidth="3.2"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+                    <div className="absolute flex flex-col items-center">
+                      <span className="text-2xl font-bold text-[#1D1D1F] tracking-tight">
+                        {Math.round(((biStats?.activeMerchants || 0) / Math.max(1, biStats?.totalMerchants || 1)) * 100)}%
+                      </span>
+                      <span className="text-[10px] uppercase font-semibold text-[#86868B]">Activos</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-[#F5F5F7] rounded-xl p-3 text-center text-xs text-[#6E6E73]">
+                  Parlante y notificaciones funcionando sin incidencias técnicas.
+                </div>
+              </div>
             </div>
+          </div>
+        )}
 
-            <div className="flex items-center space-x-2">
-              {["ALL", "ACTIVE", "EXPIRED", "SUSPENDED"].map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    statusFilter === st
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                      : "bg-[#141A26] text-gray-400 hover:text-gray-200 border border-[#232C3D]"
-                  }`}
-                >
-                  {st === "ALL" && "Todos"}
-                  {st === "ACTIVE" && "Activos"}
-                  {st === "EXPIRED" && "Vencidos"}
-                  {st === "SUSPENDED" && "Suspendidos"}
-                </button>
-              ))}
+        {/* ========================================================= */}
+        {/* PESTAÑA 2: COMERCIOS & GESTIÓN DE LICENCIAS (ESTILO APPLE) */}
+        {/* ========================================================= */}
+        {activeTab === "merchants" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight text-[#1D1D1F]">
+                  Comercios & Licencias
+                </h2>
+                <p className="text-sm text-[#86868B] mt-1">
+                  Listado de clientes autorizados, control de acceso y vinculación de equipos.
+                </p>
+              </div>
 
               <button
-                onClick={fetchData}
-                className="p-2 rounded-lg bg-[#141A26] border border-[#232C3D] text-gray-400 hover:text-white transition"
-                title="Actualizar datos"
+                onClick={() => {
+                  if (!formPassword) generateRandomPassword();
+                  setActiveTab("create");
+                }}
+                className="inline-flex items-center space-x-2 bg-[#0071E3] hover:bg-[#0077ED] text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition active:scale-95"
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>Nuevo Comercio</span>
               </button>
             </div>
-          </div>
 
-          {/* Tabla de Comercios */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-300">
-              <thead className="bg-[#121824] text-[11px] uppercase tracking-wider text-gray-400 border-b border-[#1E2638]">
-                <tr>
-                  <th className="py-3.5 px-4 font-semibold">Comercio</th>
-                  <th className="py-3.5 px-4 font-semibold">Credenciales de Acceso</th>
-                  <th className="py-3.5 px-4 font-semibold">Plan & Vigencia</th>
-                  <th className="py-3.5 px-4 font-semibold">Dispositivo Vinculado</th>
-                  <th className="py-3.5 px-4 font-semibold">Estado</th>
-                  <th className="py-3.5 px-4 font-semibold text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#182030]">
-                {filteredMerchants.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-10 text-gray-500">
-                      No se encontraron comercios registrados.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredMerchants.map((merchant) => {
-                    const daysLeft = getRemainingDays(merchant.expiresAt);
-                    const isPassVisible = visiblePasswords[merchant.id];
+            {/* BARRA DE FILTROS Y BÚSQUEDA APPLE */}
+            <div className="bg-white rounded-2xl p-4 border border-black/[0.06] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative flex-1 w-full max-w-md">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868B]" />
+                <input
+                  type="text"
+                  placeholder="Buscar por negocio, correo o ID de celular..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-[#F5F5F7] border border-black/[0.06] rounded-xl pl-10 pr-4 py-2 text-xs text-[#1D1D1F] placeholder-[#86868B] focus:outline-none focus:ring-2 focus:ring-[#0071E3]/20 focus:border-[#0071E3] transition"
+                />
+              </div>
 
-                    return (
-                      <tr key={merchant.id} className="hover:bg-[#131926] transition">
-                        {/* Comercio */}
-                        <td className="py-4 px-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm">
-                              {merchant.businessName.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-semibold text-white">{merchant.businessName}</div>
-                              <div className="text-xs text-gray-400">{merchant.email}</div>
-                            </div>
-                          </div>
-                        </td>
+              <div className="flex items-center space-x-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                {["ALL", "ACTIVE", "EXPIRED", "SUSPENDED"].map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setStatusFilter(st)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                      statusFilter === st
+                        ? "bg-[#1D1D1F] text-white"
+                        : "bg-[#F5F5F7] text-[#6E6E73] hover:text-[#1D1D1F]"
+                    }`}
+                  >
+                    {st === "ALL" && "Todos"}
+                    {st === "ACTIVE" && "Activos"}
+                    {st === "EXPIRED" && "Vencidos"}
+                    {st === "SUSPENDED" && "Suspendidos"}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                        {/* Credenciales */}
-                        <td className="py-4 px-4">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-mono text-xs bg-[#151D2A] px-2.5 py-1 rounded border border-[#253043] text-gray-300">
-                              {isPassVisible ? merchant.passwordHash : "••••••••"}
-                            </span>
-                            <button
-                              onClick={() =>
-                                setVisiblePasswords((prev) => ({
-                                  ...prev,
-                                  [merchant.id]: !prev[merchant.id],
-                                }))
-                              }
-                              className="text-gray-400 hover:text-white"
-                              title={isPassVisible ? "Ocultar" : "Mostrar"}
-                            >
-                              {isPassVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            </button>
-                            <button
-                              onClick={() => copyToClipboard(merchant.passwordHash, `pass-${merchant.id}`)}
-                              className="text-gray-400 hover:text-emerald-400"
-                              title="Copiar contraseña"
-                            >
-                              {copiedId === `pass-${merchant.id}` ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                              ) : (
-                                <Copy className="w-3.5 h-3.5" />
-                              )}
-                            </button>
-                          </div>
-                        </td>
-
-                        {/* Plan & Vigencia */}
-                        <td className="py-4 px-4">
-                          <div className="text-xs font-medium text-gray-200">{merchant.planName}</div>
-                          <div className="text-[11px] text-gray-400 mt-0.5">
-                            {merchant.status === "EXPIRED" ? (
-                              <span className="text-rose-400 font-semibold">Expirado</span>
-                            ) : (
-                              <span className={daysLeft <= 5 ? "text-amber-400 font-semibold" : "text-emerald-400"}>
-                                {daysLeft} días restantes
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Dispositivo Vinculado */}
-                        <td className="py-4 px-4">
-                          {merchant.boundDeviceId ? (
-                            <div className="flex items-center space-x-1.5">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                <Lock className="w-3 h-3 mr-1" />
-                                {merchant.boundDeviceId.slice(0, 12)}...
-                              </span>
-                              <button
-                                onClick={() => handleResetDevice(merchant.id)}
-                                className="p-1 rounded text-gray-400 hover:text-amber-400 hover:bg-amber-400/10"
-                                title="Desvincular celular (Reset Device ID)"
-                              >
-                                <RotateCcw className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono bg-gray-800 text-gray-400 border border-gray-700">
-                              <Unlock className="w-3 h-3 mr-1" /> Sin teléfono vinculado
-                            </span>
-                          )}
-                        </td>
-
-                        {/* Estado */}
-                        <td className="py-4 px-4">
-                          {merchant.status === "ACTIVE" && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                              Activo
-                            </span>
-                          )}
-                          {merchant.status === "EXPIRED" && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">
-                              Vencido
-                            </span>
-                          )}
-                          {merchant.status === "SUSPENDED" && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-500/15 text-gray-400 border border-gray-500/30">
-                              Suspendido
-                            </span>
-                          )}
-                        </td>
-
-                        {/* Acciones */}
-                        <td className="py-4 px-4 text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            {/* Copiar Credenciales Formateadas */}
-                            <button
-                              onClick={() => {
-                                const msg = `Hola! Bienvenido a Punk Cobros.\nAquí tienes tus credenciales para la app:\n- Correo: ${merchant.email}\n- Contraseña: ${merchant.passwordHash}\n- Plan: ${merchant.planName}\nDescarga el APK aquí: https://github.com/Alexander-Manosalva-Peralta/parlante-cobros-app/releases/download/v1.0.8/app-debug.apk`;
-                                copyToClipboard(msg, `full-${merchant.id}`);
-                              }}
-                              className="p-1.5 rounded-lg bg-[#182030] hover:bg-[#202B40] text-gray-300 hover:text-white transition"
-                              title="Copiar texto para WhatsApp"
-                            >
-                              {copiedId === `full-${merchant.id}` ? (
-                                <Check className="w-4 h-4 text-emerald-400" />
-                              ) : (
-                                <Send className="w-4 h-4" />
-                              )}
-                            </button>
-
-                            {/* Suspender / Activar */}
-                            <button
-                              onClick={() => handleToggleStatus(merchant)}
-                              className={`p-1.5 rounded-lg transition ${
-                                merchant.status === "ACTIVE"
-                                  ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-400"
-                                  : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400"
-                              }`}
-                              title={merchant.status === "ACTIVE" ? "Suspender cuenta" : "Reactivar cuenta"}
-                            >
-                              <ShieldCheck className="w-4 h-4" />
-                            </button>
-
-                            {/* Eliminar */}
-                            <button
-                              onClick={() => handleDeleteMerchant(merchant.id)}
-                              className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition"
-                              title="Eliminar comercio"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+            {/* TABLA ESTILO NUMBERS / APPLE SETTINGS */}
+            <div className="bg-white rounded-2xl border border-black/[0.06] shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-[#1D1D1F]">
+                  <thead className="bg-[#FBFBFD] text-[11px] font-semibold text-[#86868B] uppercase tracking-wider border-b border-black/[0.06]">
+                    <tr>
+                      <th className="py-4 px-5">Comercio</th>
+                      <th className="py-4 px-5">Credenciales de Acceso</th>
+                      <th className="py-4 px-5">Plan de Pago Único</th>
+                      <th className="py-4 px-5">Celular Vinculado</th>
+                      <th className="py-4 px-5">Estado</th>
+                      <th className="py-4 px-5 text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/[0.04]">
+                    {filteredMerchants.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-12 text-[#86868B]">
+                          No se encontraron comercios registrados en esta categoría.
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </main>
+                    ) : (
+                      filteredMerchants.map((merchant) => {
+                        const daysLeft = getRemainingDays(merchant.expiresAt);
+                        const isPassVisible = visiblePasswords[merchant.id];
 
-      {/* MODAL: CREAR NUEVO COMERCIO */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0F141F] border border-[#232D3F] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-[#1E2638] pb-3">
-              <div className="flex items-center space-x-2">
-                <Building2 className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-base font-bold text-white">Crear Nuevo Comercio</h3>
+                        return (
+                          <tr key={merchant.id} className="hover:bg-[#F5F5F7]/60 transition">
+                            {/* Comercio */}
+                            <td className="py-4 px-5">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 rounded-xl bg-[#0071E3]/10 text-[#0071E3] font-bold text-xs flex items-center justify-center">
+                                  {merchant.businessName.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-[#1D1D1F]">
+                                    {merchant.businessName}
+                                  </div>
+                                  <div className="text-[11px] text-[#86868B]">{merchant.email}</div>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Credenciales */}
+                            <td className="py-4 px-5">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-mono text-xs bg-[#F5F5F7] px-2.5 py-1 rounded-md text-[#1D1D1F] border border-black/[0.04]">
+                                  {isPassVisible ? merchant.passwordHash : "••••••••"}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    setVisiblePasswords((prev) => ({
+                                      ...prev,
+                                      [merchant.id]: !prev[merchant.id],
+                                    }))
+                                  }
+                                  className="text-[#86868B] hover:text-[#1D1D1F] p-1"
+                                  title={isPassVisible ? "Ocultar clave" : "Mostrar clave"}
+                                >
+                                  {isPassVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                </button>
+                                <button
+                                  onClick={() => copyToClipboard(merchant.passwordHash, `pass-${merchant.id}`)}
+                                  className="text-[#86868B] hover:text-[#0071E3] p-1"
+                                  title="Copiar contraseña"
+                                >
+                                  {copiedId === `pass-${merchant.id}` ? (
+                                    <Check className="w-3.5 h-3.5 text-[#34C759]" />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            </td>
+
+                            {/* Plan de Pago Único */}
+                            <td className="py-4 px-5">
+                              <div className="font-medium text-[#1D1D1F]">{merchant.planName}</div>
+                              <div className="text-[11px] text-[#86868B] mt-0.5">
+                                {merchant.status === "EXPIRED" ? (
+                                  <span className="text-[#FF3B30] font-semibold">Expirado</span>
+                                ) : (
+                                  <span className={daysLeft <= 5 ? "text-[#FF9500] font-semibold" : "text-[#34C759]"}>
+                                    {daysLeft} días restantes
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Dispositivo Vinculado */}
+                            <td className="py-4 px-5">
+                              {merchant.boundDeviceId ? (
+                                <div className="flex items-center space-x-2">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono bg-[#34C759]/10 text-[#248A3D] border border-[#34C759]/20">
+                                    <Lock className="w-3 h-3 mr-1" />
+                                    {merchant.boundDeviceId.slice(0, 10)}...
+                                  </span>
+                                  <button
+                                    onClick={() => handleResetDevice(merchant.id)}
+                                    className="p-1 rounded text-[#86868B] hover:text-[#FF9500] hover:bg-[#FF9500]/10 transition"
+                                    title="Desvincular celular (Reset Device ID)"
+                                  >
+                                    <RotateCcw className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono bg-[#F5F5F7] text-[#86868B]">
+                                  <Unlock className="w-3 h-3 mr-1" /> Libre
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Estado */}
+                            <td className="py-4 px-5">
+                              {merchant.status === "ACTIVE" && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#34C759]/15 text-[#248A3D]">
+                                  Activo
+                                </span>
+                              )}
+                              {merchant.status === "EXPIRED" && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#FF3B30]/15 text-[#D70015]">
+                                  Vencido
+                                </span>
+                              )}
+                              {merchant.status === "SUSPENDED" && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-black/[0.08] text-[#6E6E73]">
+                                  Suspendido
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Acciones */}
+                            <td className="py-4 px-5 text-right">
+                              <div className="flex items-center justify-end space-x-1.5">
+                                {/* Botón Copiar Mensaje para WhatsApp */}
+                                <button
+                                  onClick={() => {
+                                    const msg = `¡Hola! Bienvenido a Punk Cobros.\nAquí tienes tus credenciales para tu app:\n\n📱 Aplicación: Punk Cobros\n🏢 Negocio: ${merchant.businessName}\n📧 Correo: ${merchant.email}\n🔑 Contraseña: ${merchant.passwordHash}\n⏳ Plan contratado: ${merchant.planName}\n\nDescarga el APK oficial aquí:\nhttps://github.com/Alexander-Manosalva-Peralta/parlante-cobros-app/releases/download/v1.0.8/app-debug.apk\n\n(Tu cuenta se vinculará de forma segura a tu primer teléfono celular).`;
+                                    copyToClipboard(msg, `full-${merchant.id}`);
+                                  }}
+                                  className="p-1.5 rounded-lg bg-[#F5F5F7] hover:bg-[#E5E5EA] text-[#6E6E73] hover:text-[#1D1D1F] transition"
+                                  title="Copiar texto para WhatsApp"
+                                >
+                                  {copiedId === `full-${merchant.id}` ? (
+                                    <Check className="w-3.5 h-3.5 text-[#34C759]" />
+                                  ) : (
+                                    <Send className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+
+                                {/* Suspender / Activar */}
+                                <button
+                                  onClick={() => handleToggleStatus(merchant)}
+                                  className={`p-1.5 rounded-lg transition ${
+                                    merchant.status === "ACTIVE"
+                                      ? "bg-[#FF9500]/10 hover:bg-[#FF9500]/20 text-[#FF9500]"
+                                      : "bg-[#34C759]/10 hover:bg-[#34C759]/20 text-[#34C759]"
+                                  }`}
+                                  title={merchant.status === "ACTIVE" ? "Suspender cuenta" : "Reactivar cuenta"}
+                                >
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                </button>
+
+                                {/* Eliminar */}
+                                <button
+                                  onClick={() => handleDeleteMerchant(merchant.id)}
+                                  className="p-1.5 rounded-lg bg-[#FF3B30]/10 hover:bg-[#FF3B30]/20 text-[#FF3B30] transition"
+                                  title="Eliminar comercio"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white text-lg">
-                ✕
-              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* PESTAÑA 3: REGISTRAR COMERCIO & MENSAJE WHATSAPP (SIN MODAL FLOTANTE) */}
+        {/* ========================================================= */}
+        {activeTab === "create" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-[#1D1D1F]">
+                Registrar Nuevo Comercio
+              </h2>
+              <p className="text-sm text-[#86868B] mt-1">
+                Genera credenciales de acceso para un nuevo cliente y prepara su mensaje de bienvenida para WhatsApp.
+              </p>
             </div>
 
-            <form onSubmit={handleCreateMerchant} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-                  Nombre del Negocio
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej: Panadería San Martín"
-                  value={formBusinessName}
-                  onChange={(e) => setFormBusinessName(e.target.value)}
-                  className="w-full bg-[#141A26] border border-[#232C3D] rounded-xl px-3.5 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-emerald-500 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-                  Correo Electrónico (Login)
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="cliente@gmail.com"
-                  value={formEmail}
-                  onChange={(e) => setFormEmail(e.target.value)}
-                  className="w-full bg-[#141A26] border border-[#232C3D] rounded-xl px-3.5 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-emerald-500 transition"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Contraseña de Acceso
-                  </label>
-                  <button
-                    type="button"
-                    onClick={generateRandomPassword}
-                    className="text-[11px] text-emerald-400 hover:underline flex items-center space-x-1"
-                  >
-                    <RefreshCw className="w-3 h-3" />
-                    <span>Autogenerar</span>
-                  </button>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+              {/* Formulario Estilo Apple Settings */}
+              <div className="bg-white rounded-2xl p-7 border border-black/[0.06] shadow-sm space-y-5">
+                <div className="flex items-center space-x-2.5 pb-3 border-b border-black/[0.04]">
+                  <Building2 className="w-5 h-5 text-[#0071E3]" />
+                  <h3 className="text-base font-semibold text-[#1D1D1F]">
+                    Datos de la Licencia
+                  </h3>
                 </div>
-                <input
-                  type="text"
-                  required
-                  value={formPassword}
-                  onChange={(e) => setFormPassword(e.target.value)}
-                  className="w-full bg-[#141A26] border border-[#232C3D] rounded-xl px-3.5 py-2.5 text-sm font-mono text-gray-200 focus:outline-none focus:border-emerald-500 transition"
-                />
+
+                <form onSubmit={handleCreateMerchant} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#6E6E73] uppercase tracking-wider mb-1.5">
+                      Nombre del Negocio o Comercio
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej: Bodega San José"
+                      value={formBusinessName}
+                      onChange={(e) => setFormBusinessName(e.target.value)}
+                      className="w-full bg-[#F5F5F7] border border-black/[0.06] rounded-xl px-4 py-2.5 text-xs text-[#1D1D1F] placeholder-[#86868B] focus:outline-none focus:ring-2 focus:ring-[#0071E3]/20 focus:border-[#0071E3] transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#6E6E73] uppercase tracking-wider mb-1.5">
+                      Correo Electrónico del Cliente
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="ejemplo@gmail.com"
+                      value={formEmail}
+                      onChange={(e) => setFormEmail(e.target.value)}
+                      className="w-full bg-[#F5F5F7] border border-black/[0.06] rounded-xl px-4 py-2.5 text-xs text-[#1D1D1F] placeholder-[#86868B] focus:outline-none focus:ring-2 focus:ring-[#0071E3]/20 focus:border-[#0071E3] transition"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-semibold text-[#6E6E73] uppercase tracking-wider">
+                        Contraseña de Acceso
+                      </label>
+                      <button
+                        type="button"
+                        onClick={generateRandomPassword}
+                        className="text-[11px] text-[#0071E3] hover:underline flex items-center space-x-1 font-medium"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Autogenerar contraseña</span>
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={formPassword}
+                      onChange={(e) => setFormPassword(e.target.value)}
+                      className="w-full bg-[#F5F5F7] border border-black/[0.06] rounded-xl px-4 py-2.5 text-xs font-mono text-[#1D1D1F] focus:outline-none focus:ring-2 focus:ring-[#0071E3]/20 focus:border-[#0071E3] transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#6E6E73] uppercase tracking-wider mb-1.5">
+                      Modalidad de Pago Único & Duración
+                    </label>
+                    <select
+                      value={formPlan}
+                      onChange={(e) => setFormPlan(e.target.value)}
+                      className="w-full bg-[#F5F5F7] border border-black/[0.06] rounded-xl px-4 py-2.5 text-xs text-[#1D1D1F] focus:outline-none focus:ring-2 focus:ring-[#0071E3]/20 focus:border-[#0071E3] transition"
+                    >
+                      <option value="30">Pago Único — Licencia 30 Días (S/. 35.00)</option>
+                      <option value="90">Pago Único — Licencia 90 Días (S/. 95.00)</option>
+                      <option value="180">Pago Único — Licencia 180 Días (S/. 175.00)</option>
+                      <option value="365">Pago Único — Licencia 365 Días (S/. 320.00)</option>
+                    </select>
+                  </div>
+
+                  <div className="pt-3 flex items-center space-x-3">
+                    <button
+                      type="submit"
+                      disabled={creating}
+                      className="flex-1 py-3 rounded-xl bg-[#0071E3] hover:bg-[#0077ED] text-white text-xs font-semibold shadow-sm transition active:scale-95 disabled:opacity-50"
+                    >
+                      {creating ? "Guardando..." : "Guardar & Generar Credenciales"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetForm}
+                      className="px-4 py-3 rounded-xl border border-black/[0.08] text-[#6E6E73] hover:text-[#1D1D1F] text-xs font-medium transition"
+                    >
+                      Limpiar
+                    </button>
+                  </div>
+                </form>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-                  Plan de Cobros & Duración
-                </label>
-                <select
-                  value={formPlan}
-                  onChange={(e) => setFormPlan(e.target.value)}
-                  className="w-full bg-[#141A26] border border-[#232C3D] rounded-xl px-3.5 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-emerald-500 transition"
-                >
-                  <option value="30">Plan Pro 30 Días — S/. 35.00</option>
-                  <option value="90">Plan Trimestral 90 Días — S/. 95.00</option>
-                  <option value="180">Plan Semestral 180 Días — S/. 175.00</option>
-                  <option value="365">Plan Anual 365 Días — S/. 320.00</option>
-                </select>
-              </div>
+              {/* Vista Previa del Mensaje para WhatsApp Integrada (En la misma pantalla) */}
+              <div className="bg-white rounded-2xl p-7 border border-black/[0.06] shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-black/[0.04]">
+                  <div className="flex items-center space-x-2">
+                    <Send className="w-4 h-4 text-[#34C759]" />
+                    <h3 className="text-base font-semibold text-[#1D1D1F]">
+                      Mensaje de WhatsApp para el Cliente
+                    </h3>
+                  </div>
+                  <span className="text-[11px] text-[#86868B]">Vista previa en vivo</span>
+                </div>
 
-              <div className="pt-2 flex items-center space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="w-1/2 py-2.5 rounded-xl border border-[#232C3D] text-gray-400 hover:text-white transition text-sm font-semibold"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={creating}
-                  className="w-1/2 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-gray-950 transition text-sm font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-                >
-                  {creating ? "Creando..." : "Crear Comercio"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                <p className="text-xs text-[#6E6E73]">
+                  Este texto se genera automáticamente con los datos que ingreses a la izquierda. Puedes copiarlo y pegarlo directamente en el chat de WhatsApp de tu cliente:
+                </p>
 
-      {/* MODAL: CREDENCIALES CREADAS & MENSAJE WHATSAPP */}
-      {showWhatsappModal && newMerchantData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0F141F] border border-emerald-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-            <div className="flex items-center space-x-3 text-emerald-400">
-              <CheckCircle2 className="w-6 h-6" />
-              <h3 className="text-base font-bold text-white">¡Comercio Creado con Éxito!</h3>
-            </div>
-
-            <p className="text-xs text-gray-300">
-              Copia este mensaje preparado para enviar directamente al WhatsApp del cliente con sus credenciales y el enlace de descarga oficial de la app Punk:
-            </p>
-
-            <div className="bg-[#121824] border border-[#232C3D] rounded-xl p-4 font-mono text-xs text-gray-200 whitespace-pre-wrap select-all">
+                {/* Caja de Texto Estilo Apple Preview */}
+                <div className="bg-[#F5F5F7] border border-black/[0.04] rounded-xl p-4 font-mono text-xs text-[#1D1D1F] whitespace-pre-wrap select-all leading-relaxed">
 {`¡Hola! Bienvenido a Punk Cobros.
 Aquí tienes tus credenciales de acceso para tu app de cobros y parlante de voz:
 
 📱 Aplicación: Punk Cobros (Android)
-🏢 Negocio: ${newMerchantData.businessName}
-📧 Correo de acceso: ${newMerchantData.email}
-🔑 Contraseña: ${newMerchantData.passwordHash}
-⏳ Plan contratado: ${newMerchantData.planName}
+🏢 Negocio: ${formBusinessName || "[Nombre del Negocio]"}
+📧 Correo de acceso: ${formEmail || "[correo@gmail.com]"}
+🔑 Contraseña: ${formPassword || "[clave]"}
+⏳ Modalidad: Pago Único (${formPlan} días de vigencia)
 
-Descarga el APK oficial aquí:
+Descarga tu APK oficial aquí:
 https://github.com/Alexander-Manosalva-Peralta/parlante-cobros-app/releases/download/v1.0.8/app-debug.apk
 
-(Nota de seguridad: tu cuenta quedará vinculada automáticamente a tu primer teléfono celular).`}
-            </div>
+(Nota: Tu cuenta se vinculará automáticamente a tu primer teléfono celular).`}
+                </div>
 
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => {
-                  const msg = `¡Hola! Bienvenido a Punk Cobros.\nAquí tienes tus credenciales de acceso para tu app de cobros y parlante de voz:\n\n📱 Aplicación: Punk Cobros (Android)\n🏢 Negocio: ${newMerchantData.businessName}\n📧 Correo de acceso: ${newMerchantData.email}\n🔑 Contraseña: ${newMerchantData.passwordHash}\n⏳ Plan contratado: ${newMerchantData.planName}\n\nDescarga el APK oficial aquí:\nhttps://github.com/Alexander-Manosalva-Peralta/parlante-cobros-app/releases/download/v1.0.8/app-debug.apk\n\n(Nota de seguridad: tu cuenta quedará vinculada automáticamente a tu primer teléfono celular).`;
-                  copyToClipboard(msg, "modal-copy");
-                }}
-                className="w-full flex items-center justify-center space-x-2 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-bold transition shadow-lg shadow-emerald-500/20"
-              >
-                {copiedId === "modal-copy" ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>¡Copiado al portapapeles!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    <span>Copiar Mensaje para WhatsApp</span>
-                  </>
+                <div className="pt-2">
+                  <button
+                    onClick={() => {
+                      const msg = `¡Hola! Bienvenido a Punk Cobros.\nAquí tienes tus credenciales de acceso para tu app de cobros y parlante de voz:\n\n📱 Aplicación: Punk Cobros (Android)\n🏢 Negocio: ${formBusinessName || "Tu Negocio"}\n📧 Correo de acceso: ${formEmail || "tu_correo@gmail.com"}\n🔑 Contraseña: ${formPassword || "clave"}\n⏳ Modalidad: Pago Único (${formPlan} días de vigencia)\n\nDescarga tu APK oficial aquí:\nhttps://github.com/Alexander-Manosalva-Peralta/parlante-cobros-app/releases/download/v1.0.8/app-debug.apk\n\n(Nota: Tu cuenta se vinculará automáticamente a tu primer teléfono celular).`;
+                      copyToClipboard(msg, "tab-copy-live");
+                    }}
+                    className="w-full flex items-center justify-center space-x-2 py-3 rounded-xl bg-[#34C759] hover:bg-[#30B753] text-white font-semibold text-xs transition shadow-sm active:scale-95"
+                  >
+                    {copiedId === "tab-copy-live" ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>¡Mensaje Copiado al Portapapeles!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>Copiar Mensaje para Enviar por WhatsApp</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {createdSuccess && (
+                  <div className="mt-4 p-3.5 rounded-xl bg-[#34C759]/10 border border-[#34C759]/20 flex items-center space-x-2 text-xs text-[#248A3D] font-medium">
+                    <CheckCircle2 className="w-4 h-4 text-[#34C759]" />
+                    <span>¡Comercio {createdSuccess.businessName} guardado con éxito en el sistema!</span>
+                  </div>
                 )}
-              </button>
-              <button
-                onClick={() => setShowWhatsappModal(false)}
-                className="px-4 py-3 rounded-xl border border-[#232C3D] text-gray-400 hover:text-white transition text-xs font-semibold"
-              >
-                Cerrar
-              </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* ========================================================= */}
+        {/* PESTAÑA 4: BASE DE DATOS SUPABASE & GUÍA DE CONFIGURACIÓN */}
+        {/* ========================================================= */}
+        {activeTab === "database" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-[#1D1D1F]">
+                Conexión & Base de Datos (Supabase)
+              </h2>
+              <p className="text-sm text-[#86868B] mt-1">
+                Guía rápida de integración de PostgreSQL en Supabase con Next.js y Vercel.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Tarjeta de Instrucciones para la pantalla de Supabase */}
+              <div className="bg-white rounded-2xl p-6 border border-black/[0.06] shadow-sm space-y-4">
+                <div className="flex items-center space-x-2 pb-2 border-b border-black/[0.04]">
+                  <Database className="w-4 h-4 text-[#0071E3]" />
+                  <h3 className="text-sm font-semibold text-[#1D1D1F]">
+                    Cómo Completar la Pantalla de Creación de Supabase
+                  </h3>
+                </div>
+
+                <div className="space-y-3 text-xs text-[#6E6E73] leading-relaxed">
+                  <div className="p-3 bg-[#F5F5F7] rounded-xl border border-black/[0.04]">
+                    <span className="font-semibold text-[#1D1D1F] block mb-1">1. Database password:</span>
+                    Haz clic en el enlace azul <strong>Generate a password</strong> y copia la contraseña generada en tu bloc de notas.
+                  </div>
+
+                  <div className="p-3 bg-[#F5F5F7] rounded-xl border border-black/[0.04]">
+                    <span className="font-semibold text-[#1D1D1F] block mb-1">2. Region:</span>
+                    Selecciona <strong>Americas (São Paulo, Brazil)</strong> o <strong>Americas (East US - North Virginia)</strong> para tener la menor latencia posible en Perú y Latinoamérica.
+                  </div>
+
+                  <div className="p-3 bg-[#F5F5F7] rounded-xl border border-black/[0.04]">
+                    <span className="font-semibold text-[#1D1D1F] block mb-1">3. Security Checkboxes:</span>
+                    Deja marcadas las casillas <strong>Enable Data API</strong> y <strong>Automatically expose new tables</strong> tal como están en tu captura de pantalla.
+                  </div>
+
+                  <div className="p-3 bg-[#F5F5F7] rounded-xl border border-black/[0.04]">
+                    <span className="font-semibold text-[#1D1D1F] block mb-1">4. Crear el Proyecto:</span>
+                    Haz clic en el botón inferior <strong>Create new project</strong> y espera aproximadamente 1 minuto mientras se provisiona.
+                  </div>
+                </div>
+              </div>
+
+              {/* Tarjeta de Script SQL Listo para Ejecutar */}
+              <div className="bg-white rounded-2xl p-6 border border-black/[0.06] shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-black/[0.04]">
+                  <h3 className="text-sm font-semibold text-[#1D1D1F]">
+                    Script SQL para Crear las Tablas
+                  </h3>
+                  <button
+                    onClick={() => {
+                      const sql = `-- PUNK SUPABASE DATABASE SCHEMA
+CREATE TABLE IF NOT EXISTS public.merchants (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    business_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    plan_name VARCHAR(100) DEFAULT 'Pago Único - Licencia 30 Días',
+    days_duration INT DEFAULT 30,
+    price_soles DECIMAL(10, 2) DEFAULT 35.00,
+    status VARCHAR(50) DEFAULT 'ACTIVE',
+    bound_device_id VARCHAR(255) DEFAULT NULL,
+    first_login_at TIMESTAMPTZ DEFAULT NULL,
+    expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '30 days'),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.merchants ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anon Full Access" ON public.merchants FOR ALL USING (true) WITH CHECK (true);`;
+                      copyToClipboard(sql, "sql-copy");
+                    }}
+                    className="text-xs text-[#0071E3] hover:underline font-medium flex items-center space-x-1"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>{copiedId === "sql-copy" ? "¡Copiado!" : "Copiar SQL"}</span>
+                  </button>
+                </div>
+
+                <p className="text-xs text-[#6E6E73]">
+                  En tu panel de Supabase, ve a la pestaña <strong>SQL Editor</strong> en el menú lateral izquierdo, pega este código y haz clic en <strong>RUN</strong>:
+                </p>
+
+                <div className="bg-[#1D1D1F] text-gray-200 rounded-xl p-3.5 font-mono text-[11px] overflow-x-auto leading-relaxed max-h-48">
+{`CREATE TABLE public.merchants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  plan_name VARCHAR(100) DEFAULT 'Pago Único - Licencia 30 Días',
+  days_duration INT DEFAULT 30,
+  price_soles DECIMAL(10, 2) DEFAULT 35.00,
+  status VARCHAR(50) DEFAULT 'ACTIVE',
+  bound_device_id VARCHAR(255) DEFAULT NULL,
+  expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '30 days')
+);`}
+                </div>
+
+                <div className="p-3 bg-[#F5F5F7] rounded-xl text-xs text-[#6E6E73]">
+                  Luego en <strong>Project Settings &gt; API</strong>, copia tu <strong>Project URL</strong> y tu <strong>anon public key</strong> para agregarlas en Vercel.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
