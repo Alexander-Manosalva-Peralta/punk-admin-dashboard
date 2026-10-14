@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 
 export const metadata = {
   title: "Políticas de Privacidad — Punk Cobros",
@@ -8,34 +7,32 @@ export const metadata = {
 
 export default function PrivacidadPage() {
   return (
-    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-sm border border-[#E5E7EB] p-8 sm:p-12">
+    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
+      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-sm border border-[#E5E7EB] p-6 sm:p-12 overflow-hidden">
         {/* Header */}
         <div className="border-b border-[#E5E7EB] pb-6 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-full uppercase tracking-wider mb-2">
-              Google Play Compliance
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 border border-gray-200 text-gray-700 text-xs font-semibold rounded-full uppercase tracking-wider mb-2">
+              Documento Oficial de Privacidad
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#111827]">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111827]">
               Políticas de Privacidad y Tratamiento de Datos
             </h1>
-            <p className="text-sm text-[#6B7280] mt-1">
+            <p className="text-xs sm:text-sm text-[#6B7280] mt-1 break-words">
               Aplicación Móvil: <span className="font-semibold text-[#111827]">Punk</span> (com.parlantecobros.app) | Última actualización: 14 de Octubre de 2026
             </p>
           </div>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center px-4 py-2 border border-[#D1D5DB] text-sm font-medium rounded-xl text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-          >
-            ← Volver al Inicio
-          </Link>
+          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 w-fit shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Vigente para Google Play
+          </div>
         </div>
 
         {/* Content */}
-        <div className="space-y-8 text-sm sm:text-base leading-relaxed text-[#374151]">
+        <div className="space-y-8 text-sm sm:text-base leading-relaxed text-[#374151] break-words">
           {/* Section 1 */}
           <section>
-            <h2 className="text-xl font-bold text-[#111827] mb-3">
+            <h2 className="text-lg sm:text-xl font-bold text-[#111827] mb-3">
               1. Identidad del Desarrollador y Alcance
             </h2>
             <p>
@@ -47,37 +44,41 @@ export default function PrivacidadPage() {
           </section>
 
           {/* Section 2 */}
-          <section className="bg-[#F9FAFB] p-6 rounded-2xl border border-[#E5E7EB]">
-            <h2 className="text-xl font-bold text-[#111827] mb-3 flex items-center gap-2">
-              <span>2. Uso Especial del Servicio de Acceso a Notificaciones</span>
-              <span className="text-xs px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-md font-mono">
-                BIND_NOTIFICATION_LISTENER_SERVICE
-              </span>
-            </h2>
-            <p>
-              Para cumplir con su función principal —anunciar en voz alta mediante síntesis de voz los pagos recibidos mientras el comerciante atiende a sus clientes sin necesidad de mirar su celular—, la Aplicación solicita el permiso especial de <strong>Acceso a Notificaciones</strong> de Android (<code>android.permission.BIND_NOTIFICATION_LISTENER_SERVICE</code>).
+          <section className="bg-[#F9FAFB] p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] overflow-hidden">
+            <div className="mb-3">
+              <h2 className="text-lg sm:text-xl font-bold text-[#111827]">
+                2. Uso Especial del Servicio de Acceso a Notificaciones
+              </h2>
+              <div className="mt-2">
+                <span className="text-[11px] sm:text-xs px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-md font-mono break-all inline-block font-semibold">
+                  BIND_NOTIFICATION_LISTENER_SERVICE
+                </span>
+              </div>
+            </div>
+            <p className="break-words">
+              Para cumplir con su función principal —anunciar en voz alta mediante síntesis de voz los pagos recibidos mientras el comerciante atiende a sus clientes sin necesidad de mirar su celular—, la Aplicación solicita el permiso especial de <strong>Acceso a Notificaciones</strong> de Android (<code className="break-all font-mono text-xs bg-gray-100 px-1 py-0.5 rounded text-gray-800">android.permission.BIND_NOTIFICATION_LISTENER_SERVICE</code>).
             </p>
             <div className="mt-4 space-y-3">
               <div className="flex items-start gap-3">
-                <span className="text-emerald-600 font-bold">✓</span>
+                <span className="text-emerald-600 font-bold shrink-0 mt-0.5">✓</span>
                 <div>
                   <strong className="text-[#111827]">Procesamiento 100% Local en el Dispositivo (On-Device):</strong> El análisis del texto de la notificación se ejecuta íntegramente en la memoria RAM del celular mediante expresiones regulares locales. <strong>Ningún contenido de notificación es transmitido a servidores externos ni almacenado en bases de datos remotas.</strong>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-emerald-600 font-bold">✓</span>
+                <span className="text-emerald-600 font-bold shrink-0 mt-0.5">✓</span>
                 <div>
                   <strong className="text-[#111827]">Lista Blanca Estricta de Apps Financieras:</strong> La Aplicación únicamente inspecciona notificaciones emitidas por billeteras electrónicas y entidades bancarias autorizadas en el sistema financiero peruano (como Yape, BCP, Interbank, BBVA, Scotiabank, Banco de la Nación, Tunki, Agora, Izipay y Bim).
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-red-500 font-bold">✗</span>
+                <span className="text-red-500 font-bold shrink-0 mt-0.5">✗</span>
                 <div>
                   <strong className="text-[#111827]">Filtro y Descarte Absoluto de Mensajería Personal:</strong> Notificaciones provenientes de aplicaciones de mensajería (WhatsApp, Telegram, Messenger, SMS), llamadas, redes sociales, correo electrónico o cualquier app personal son <strong>descartadas de inmediato antes de cualquier procesamiento</strong>.
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-emerald-600 font-bold">✓</span>
+                <span className="text-emerald-600 font-bold shrink-0 mt-0.5">✓</span>
                 <div>
                   <strong className="text-[#111827]">Filtro Antispam Financiero:</strong> Notificaciones comerciales o promocionales de bancos (como promociones de sorteos, créditos o campañas de marketing) son filtradas automáticamente para no emitir anuncios erróneos ni confundir al comerciante.
                 </div>
@@ -87,7 +88,7 @@ export default function PrivacidadPage() {
 
           {/* Section 3 */}
           <section>
-            <h2 className="text-xl font-bold text-[#111827] mb-3">
+            <h2 className="text-lg sm:text-xl font-bold text-[#111827] mb-3">
               3. Datos Financieros Sensibles (No Recopilación)
             </h2>
             <p>
@@ -106,7 +107,7 @@ export default function PrivacidadPage() {
 
           {/* Section 4 */}
           <section>
-            <h2 className="text-xl font-bold text-[#111827] mb-3">
+            <h2 className="text-lg sm:text-xl font-bold text-[#111827] mb-3">
               4. Motor de Síntesis de Voz (Text-to-Speech)
             </h2>
             <p>
@@ -116,7 +117,7 @@ export default function PrivacidadPage() {
 
           {/* Section 5 */}
           <section>
-            <h2 className="text-xl font-bold text-[#111827] mb-3">
+            <h2 className="text-lg sm:text-xl font-bold text-[#111827] mb-3">
               5. Información de Cuenta y Licencia
             </h2>
             <p>
@@ -133,7 +134,7 @@ export default function PrivacidadPage() {
 
           {/* Section 6 */}
           <section>
-            <h2 className="text-xl font-bold text-[#111827] mb-3">
+            <h2 className="text-lg sm:text-xl font-bold text-[#111827] mb-3">
               6. Derechos del Usuario y Revocación de Permisos
             </h2>
             <p>
@@ -154,7 +155,7 @@ export default function PrivacidadPage() {
 
           {/* Section 7 */}
           <section>
-            <h2 className="text-xl font-bold text-[#111827] mb-3">
+            <h2 className="text-lg sm:text-xl font-bold text-[#111827] mb-3">
               7. Modificaciones a la Presente Política
             </h2>
             <p>
@@ -164,7 +165,7 @@ export default function PrivacidadPage() {
 
           {/* Section 8 */}
           <section className="border-t border-[#E5E7EB] pt-6">
-            <h2 className="text-xl font-bold text-[#111827] mb-3">
+            <h2 className="text-lg sm:text-xl font-bold text-[#111827] mb-3">
               8. Contacto y Soporte Oficial
             </h2>
             <p>
@@ -173,7 +174,7 @@ export default function PrivacidadPage() {
             <div className="mt-3 p-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] inline-block">
               <p className="font-semibold text-[#111827]">Equipo de Cumplimiento & Soporte Punk</p>
               <p className="text-sm text-[#4B5563] mt-1">
-                Correo Electrónico: <a href="mailto:soporte.punkapp@gmail.com" className="text-blue-600 underline font-mono">soporte.punkapp@gmail.com</a>
+                Correo Electrónico: <a href="mailto:soporte.punkapp@gmail.com" className="text-blue-600 underline font-mono break-all">soporte.punkapp@gmail.com</a>
               </p>
               <p className="text-xs text-[#6B7280] mt-1">Lima, Perú • Desarrollado para comercios y emprendedores</p>
             </div>

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMerchants, createMerchant, updateMerchantStatus, resetMerchantDevice, deleteMerchant } from "@/lib/db";
+import { isAuthorizedAdmin } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isAuthorizedAdmin(req)) {
+    return NextResponse.json({ success: false, message: "Acceso no autorizado al panel administrativo." }, { status: 401 });
+  }
+
   try {
     const list = await getMerchants();
     return NextResponse.json({ success: true, data: list, merchants: list });
@@ -11,6 +16,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthorizedAdmin(req)) {
+    return NextResponse.json({ success: false, message: "Acceso no autorizado al panel administrativo." }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { businessName, email } = body;
@@ -42,6 +51,10 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  if (!isAuthorizedAdmin(req)) {
+    return NextResponse.json({ success: false, message: "Acceso no autorizado al panel administrativo." }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { id, action, status } = body;
@@ -67,6 +80,10 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!isAuthorizedAdmin(req)) {
+    return NextResponse.json({ success: false, message: "Acceso no autorizado al panel administrativo." }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

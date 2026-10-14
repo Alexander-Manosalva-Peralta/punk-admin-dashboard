@@ -62,6 +62,14 @@ interface BiData {
 type TabType = "bi" | "merchants" | "create" | "database";
 
 export default function AppleAdminDashboard() {
+  const [adminToken, setAdminToken] = useState<string | null>(null);
+  const [authChecking, setAuthChecking] = useState(true);
+  const [loginUser, setLoginUser] = useState("");
+  const [loginPass, setLoginPass] = useState("");
+  const [loginShowPass, setLoginShowPass] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+
   const [activeTab, setActiveTab] = useState<TabType>("merchants");
   const [merchants, setMerchants] = useState<MerchantItem[]>([]);
   const [biStats, setBiStats] = useState<BiData | null>(null);
@@ -80,17 +88,73 @@ export default function AppleAdminDashboard() {
   const [createdSuccess, setCreatedSuccess] = useState<MerchantItem | null>(null);
 
   useEffect(() => {
-    fetchData();
+    const saved = localStorage.getItem("punk_admin_token");
+    if (saved) {
+      setAdminToken(saved);
+      fetchData(saved);
+    } else {
+      setAuthChecking(false);
+      setLoading(false);
+    }
     generateRandomPassword();
   }, []);
 
-  async function fetchData() {
+  async function authFetch(url: string, options: RequestInit = {}, customToken?: string) {
+    const token = customToken || adminToken || localStorage.getItem("punk_admin_token") || "";
+    const headers = {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${token}`,
+    };
+    return fetch(url, { ...options, headers });
+  }
+
+  async function handleAdminLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError(null);
+    setLoginLoading(true);
+    try {
+      const res = await fetch("/api/auth/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loginUser, password: loginPass }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.token) {
+        localStorage.setItem("punk_admin_token", data.token);
+        setAdminToken(data.token);
+        setAuthChecking(false);
+        fetchData(data.token);
+      } else {
+        setLoginError(data.message || "Usuario o contraseña de administrador incorrectos.");
+      }
+    } catch (err: any) {
+      setLoginError("Error de conexión al servidor de autenticación.");
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  function handleAdminLogout() {
+    localStorage.removeItem("punk_admin_token");
+    setAdminToken(null);
+    setMerchants([]);
+    setBiStats(null);
+    setLoginPass("");
+    setLoginError(null);
+  }
+
+  async function fetchData(tokenToUse?: string) {
     setLoading(true);
     try {
       const [merchantsRes, biRes] = await Promise.all([
-        fetch("/api/merchants"),
-        fetch("/api/bi/stats"),
+        authFetch("/api/merchants", {}, tokenToUse),
+        authFetch("/api/bi/stats", {}, tokenToUse),
       ]);
+
+      if (merchantsRes.status === 401 || biRes.status === 401) {
+        handleAdminLogout();
+        return;
+      }
 
       const mData = await merchantsRes.json();
       const bData = await biRes.json();
@@ -101,7 +165,6 @@ export default function AppleAdminDashboard() {
       if (bData.metrics) {
         setBiStats(bData.metrics);
       } else {
-        // Fallback local calculations
         setBiStats({
           totalMerchants: list.length,
           activeMerchants: list.filter((m: any) => m.status === "ACTIVE").length,
@@ -116,6 +179,7 @@ export default function AppleAdminDashboard() {
       console.error("Error al cargar datos:", err);
     } finally {
       setLoading(false);
+      setAuthChecking(false);
     }
   }
 
@@ -143,7 +207,7 @@ export default function AppleAdminDashboard() {
 
     setCreating(true);
     try {
-      const res = await fetch("/api/merchants", {
+      const res = await authFetch("/api/merchants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -162,7 +226,6 @@ export default function AppleAdminDashboard() {
 
       if (res.ok && createdItem) {
         setCreatedSuccess(createdItem);
-        // Actualizar lista local inmediatamente
         setMerchants((prev) => [createdItem, ...prev]);
         fetchData();
       } else {
@@ -187,7 +250,7 @@ export default function AppleAdminDashboard() {
   async function handleResetDevice(id: string) {
     if (!confirm("¿Deseas desvincular el celular actual? El cliente podrá iniciar sesión en su nuevo equipo.")) return;
     try {
-      const res = await fetch("/api/merchants", {
+      const res = await authFetch("/api/merchants", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, action: "RESET_DEVICE" }),
@@ -201,7 +264,7 @@ export default function AppleAdminDashboard() {
   async function handleToggleStatus(merchant: MerchantItem) {
     const nextStatus = merchant.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
     try {
-      const res = await fetch("/api/merchants", {
+      const res = await authFetch("/api/merchants", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: merchant.id, action: "TOGGLE_STATUS", status: nextStatus }),
@@ -215,7 +278,7 @@ export default function AppleAdminDashboard() {
   async function handleDeleteMerchant(id: string) {
     if (!confirm("¿Seguro que deseas eliminar definitivamente este registro de comercio?")) return;
     try {
-      const res = await fetch(`/api/merchants?id=${id}`, { method: "DELETE" });
+      const res = await authFetch(`/api/merchants?id=${id}`, { method: "DELETE" });
       if (res.ok) {
         setMerchants((prev) => prev.filter((m) => m.id !== id));
         fetchData();
@@ -239,6 +302,110 @@ export default function AppleAdminDashboard() {
     const matchesStatus = statusFilter === "ALL" || m.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  if (!adminToken) {
+    if (authChecking) {
+      return (
+        <div className="min-h-screen bg-[#F5F5F7] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <RefreshCw className="w-6 h-6 animate-spin text-[#0071E3]" />
+            <p className="text-xs text-[#86868B] font-medium">Verificando sesión administrativa...</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-[#F5F5F7] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="mx-auto w-16 h-16 rounded-2xl overflow-hidden bg-white shadow-md border border-black/[0.08] flex items-center justify-center p-1">
+            <Image
+              src="/logo_p_solo.png"
+              alt="Punk Logo"
+              width={64}
+              height={64}
+              className="object-cover rounded-xl"
+              priority
+            />
+          </div>
+          <h2 className="mt-6 text-center text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
+            Punk Control
+          </h2>
+          <p className="mt-2 text-center text-xs sm:text-sm text-[#86868B]">
+            Panel exclusivo para el Administrador de Licencias
+          </p>
+        </div>
+
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-white py-8 px-6 sm:px-10 shadow-sm rounded-3xl border border-black/[0.06]">
+            {loginError && (
+              <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-red-700 font-medium">{loginError}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleAdminLogin} className="space-y-5">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#6E6E73] mb-1.5">
+                  Usuario o Correo Administrador
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={loginUser}
+                  onChange={(e) => setLoginUser(e.target.value)}
+                  placeholder="admin o admin@punk.com"
+                  className="w-full px-4 py-3 rounded-xl border border-[#D2D2D7] bg-[#FBFBFD] text-sm text-[#1D1D1F] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071E3] focus:border-transparent transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#6E6E73] mb-1.5">
+                  Contraseña Maestra
+                </label>
+                <div className="relative">
+                  <input
+                    type={loginShowPass ? "text" : "password"}
+                    required
+                    value={loginPass}
+                    onChange={(e) => setLoginPass(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full px-4 py-3 rounded-xl border border-[#D2D2D7] bg-[#FBFBFD] text-sm text-[#1D1D1F] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071E3] focus:border-transparent transition pr-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLoginShowPass(!loginShowPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  >
+                    {loginShowPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full mt-2 flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl text-sm font-semibold text-white bg-[#0071E3] hover:bg-[#0077ED] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0071E3] shadow-sm transition disabled:opacity-50"
+              >
+                {loginLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Iniciar Sesión como Administrador"
+                )}
+              </button>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-black/[0.06] text-center">
+              <span className="text-[11px] text-[#86868B]">
+                Acceso encriptado exclusivo para el propietario de la plataforma
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F]">
@@ -275,15 +442,24 @@ export default function AppleAdminDashboard() {
           <div className="flex items-center space-x-3">
             <div className="hidden sm:flex items-center space-x-2 bg-white px-3.5 py-1.5 rounded-full border border-black/[0.06] shadow-sm">
               <span className="w-2 h-2 rounded-full bg-[#34C759]"></span>
-              <span className="text-xs font-medium text-[#6E6E73]">Servidor Vercel en Línea</span>
+              <span className="text-xs font-medium text-[#6E6E73]">Admin Activo</span>
             </div>
 
             <button
-              onClick={fetchData}
+              onClick={() => fetchData()}
               className="p-2 rounded-full bg-white border border-black/[0.08] hover:bg-gray-50 text-[#6E6E73] hover:text-[#1D1D1F] transition shadow-sm"
               title="Actualizar datos"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            </button>
+
+            <button
+              onClick={handleAdminLogout}
+              className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 text-xs font-semibold transition shadow-sm"
+              title="Cerrar Sesión de Administrador"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Salir</span>
             </button>
           </div>
         </div>
